@@ -1,10 +1,10 @@
 "use strict";
 const Scene = function (gl) {
   this.vsQuad = new Shader(gl, gl.VERTEX_SHADER, "quad_vs.essl");
-  this.fsShow = new Shader(gl, gl.FRAGMENT_SHADER, "show_fs.essl");
+  //this.fsShow = new Shader(gl, gl.FRAGMENT_SHADER, "show_fs.essl");
   this.fsTrace = new Shader(gl, gl.FRAGMENT_SHADER, "trace_fs.essl");
   this.traceProgram = new TexturedProgram(gl, this.vsQuad, this.fsTrace);
-  this.showProgram = new TexturedProgram(gl, this.vsQuad, this.fsShow);
+  //this.showProgram = new TexturedProgram(gl, this.vsQuad, this.fsShow);
   this.quadGeometry = new TexturedQuadGeometry(gl);
 
   this.timeAtFirstFrame = new Date().getTime();
@@ -18,6 +18,7 @@ const Scene = function (gl) {
     "media/negy.jpg",
     "media/posz.jpg",
     "media/negz.jpg",]);
+  this.volume = new Texture3D(gl, "media/brain.jpg");
   this.tex = [];
   this.fb = [];
   this.frameNumber = 1;
@@ -43,7 +44,10 @@ Scene.prototype.update = function (gl, keysPressed) {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   this.camera.move(dt, keysPressed);
   this.traceProgram.eyePosition.set(this.camera.position);
-  this.quadGeometry.draw();
+  this.traceProgram.rayDirMatrix.set(this.camera.rayDirMatrix);
+  this.traceProgram.background.set(this.background);
+  this.traceProgram.volume.set(this.volume);
+  //this.quadGeometry.draw();
   this.traceProgram.commit();
 
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);

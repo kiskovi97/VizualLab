@@ -2,34 +2,18 @@
 
 const PerspectiveCamera = function () {
   this.position = new Vec3(0.0, 10.0, 10.0);
-  this.ahead = new Vec3(0.0, -1.0, -1.0);
+  this.ahead = new Vec3(0.0, 0.0, -1.0);
   this.right = new Vec3(1.0, 0.0, 0.0);
   this.up = new Vec3(0.0, 1.0, 0.0);
 
   this.yaw = 0.0;
-  this.pitch = -0.8;
+  this.pitch = 0.0;
   this.fov = 1.0;
   this.aspect = 1.0;
   this.nearPlane = 0.1;
   this.farPlane = 1000.0;
 
-  if (this.pitch > 3.14 / 2.0) {
-    this.pitch = 3.14 / 2.0;
-  }
-  if (this.pitch < -3.14 / 2.0) {
-    this.pitch = -3.14 / 2.0;
-  }
-  this.mouseDelta = new Vec2(0.0, 0.0);
 
-  this.ahead = new Vec3(
-    -Math.sin(this.yaw) * Math.cos(this.pitch),
-    Math.sin(this.pitch),
-    -Math.cos(this.yaw) * Math.cos(this.pitch));
-  this.right.setVectorProduct(
-    this.ahead,
-    PerspectiveCamera.worldUp);
-  this.right.normalize();
-  this.up.setVectorProduct(this.right, this.ahead);
 
 
   this.speed = 2;
