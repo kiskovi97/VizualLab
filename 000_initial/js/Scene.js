@@ -49,24 +49,27 @@ Scene.prototype.update = function (gl, keysPressed) {
     this.traceProgram.quadrics.at(0),
     this.traceProgram.clippers.at(0),
     this.traceProgram.brdfs.at(0),
-    this.traceProgram.reflective.at(0));
-  cylinder.setUnitCylinder(new Vec3(1, 1, 1), new Vec3(0, 0, 0));
+    this.traceProgram.reflective.at(0),
+    this.traceProgram.emission.at(0));
+  cylinder.setUnitCylinder(new Vec3(1, 1, 1), new Vec3(0, 0, 0), new Vec3(0, 0, 0));
   cylinder.translate(new Vec3(0, 2, 0));
 
   const green = new ClippedQuadric(
     this.traceProgram.quadrics.at(1),
     this.traceProgram.clippers.at(1),
     this.traceProgram.brdfs.at(1),
-    this.traceProgram.reflective.at(1));
-  green.setUnitSphere(new Vec3(1, 1, 1), new Vec3(0, 0, 0));
+    this.traceProgram.reflective.at(1),
+    this.traceProgram.emission.at(1));
+  green.setUnitSphere(new Vec3(1, 1, 1), new Vec3(1, 1, 1), new Vec3(0, 0, 0));
   green.translate(new Vec3(-2, 2, -2));
 
   const black = new ClippedQuadric(
     this.traceProgram.quadrics.at(2),
     this.traceProgram.clippers.at(2),
     this.traceProgram.brdfs.at(2),
-    this.traceProgram.reflective.at(2));
-  black.setSik(new Vec3(0.1, 0.4, 0), new Vec3(0, 0, 0));
+    this.traceProgram.reflective.at(2),
+    this.traceProgram.emission.at(2));
+  black.setSik(new Vec3(0.1, 0.4, 0), new Vec3(0, 0, 0), new Vec3(0, 0, 0));
   black.scale(0.5, 0.5, 0.5);
 
 
@@ -74,8 +77,9 @@ Scene.prototype.update = function (gl, keysPressed) {
     this.traceProgram.quadrics.at(3),
     this.traceProgram.clippers.at(3),
     this.traceProgram.brdfs.at(3),
-    this.traceProgram.reflective.at(3));
-  upC.setUnitSphere(new Vec3(0, 0, 1), new Vec3(0, 0, 10));
+    this.traceProgram.reflective.at(3),
+    this.traceProgram.emission.at(3));
+  upC.setUnitSphere(new Vec3(0, 0, 1), new Vec3(0, 0, 0), new Vec3(0, 0, 0));
   upC.translate(new Vec3(0, 2, 3));
   upC.scale(0.5);
 
@@ -83,8 +87,9 @@ Scene.prototype.update = function (gl, keysPressed) {
     this.traceProgram.quadrics.at(4),
     this.traceProgram.clippers.at(4),
     this.traceProgram.brdfs.at(4),
-    this.traceProgram.reflective.at(4));
-  yellowLamp.setUnitSphere(new Vec3(1, 1, 0), new Vec3(3, 3, 0));
+    this.traceProgram.reflective.at(4),
+    this.traceProgram.emission.at(4));
+  yellowLamp.setUnitSphere(new Vec3(1, 1, 0), new Vec3(0, 0, 0), new Vec3(0, 0, 0));
   yellowLamp.translate(new Vec3(5, 2, 3));
   yellowLamp.scale(0.5);
 
@@ -116,8 +121,6 @@ Scene.prototype.update = function (gl, keysPressed) {
     }
 
   }
-
-
   //---
 
   gl.bindFramebuffer(gl.FRAMEBUFFER, this.fb[1]);
@@ -157,6 +160,16 @@ Scene.prototype.resize = function (gl, width, height) {
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   this.frameNumber = 1;
 };
+
+/**
+ * Abstract: Legyen a színtérben legalább egy pontfényforrás. A láthatóságát ellenőrizze árnyéksugarakkal.
+ * Lehetséges pont és irány fényforrásokat is megadni
+ * pl.: this.traceProgram.lights.at(0).set(new Vec4(1, 1, 0, 0));
+ *
+ * Tükör: Legyen a színtérben olyan felület, ami ideális tükörként veri vissza a fényt.
+ * Be lehet állítani a felületek tükröződését, egyik gömb teljesen tükröződik:
+ * green.setUnitSphere(new Vec3(1, 1, 1), new Vec3(1, 1, 1), new Vec3(0, 0, 0));
+ */
 
 
 

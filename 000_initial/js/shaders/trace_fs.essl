@@ -10,6 +10,7 @@ uniform mat4 clippers[16];
 uniform vec4 brdfs[16];
 uniform vec4 lights[16];
 uniform vec3 reflective[16];
+uniform vec3 emission[16];
 uniform samplerCube background; 
 uniform sampler2D prevImage;
 uniform float frameNumber;
@@ -150,8 +151,10 @@ void main(void){
       vec4 bestBrdfs=brdfs[bestQuadricIndex];
       vec3 color = colirozeAll(hit,normal,bestBrdfs);
       e.xyz = hit.xyz + normal*0.001;
-      arnyalas += reflective[bestQuadricIndex] + color * w;
-      w *= 0.1;
+      vec3 refl = reflective[bestQuadricIndex];
+      vec3 negreflt = vec3(1, 1, 1 ) - refl;
+      arnyalas += emission[bestQuadricIndex] + color * w * negreflt;
+      w *= refl;
       d.xyz = newDirection(d.xyz, i, normal, false);
     } else {
       arnyalas += texture(background, d.xyz).xyz * w;

@@ -1,11 +1,12 @@
-const ClippedQuadric = function (A, B, brdfs, reflective) {
+const ClippedQuadric = function (A, B, brdfs, reflective, emission) {
     this.A = A;
     this.B = B;
     this.brdfs = brdfs;
     this.reflective = reflective;
+    this.emission = emission;
 }
 
-ClippedQuadric.prototype.setUnitSphere = function (color, reflective) {
+ClippedQuadric.prototype.setUnitSphere = function (color, reflective, emission) {
     this.A.set(1, 0, 0, 0,
         0, 1, 0, 0,
         0, 0, 1, 0,
@@ -16,9 +17,10 @@ ClippedQuadric.prototype.setUnitSphere = function (color, reflective) {
         0, 0, 0, -1);
     this.brdfs.set(color);
     this.reflective.set(reflective);
+    this.emission.set(emission);
 }
 
-ClippedQuadric.prototype.setSik = function (color, reflective) {
+ClippedQuadric.prototype.setSik = function (color, reflective, emission) {
     this.A.set(0, 0, 0, 0,
         0, 1, 0, 0,
         0, 0, 0, 0,
@@ -29,9 +31,10 @@ ClippedQuadric.prototype.setSik = function (color, reflective) {
         0, 0, 0, -50);
     this.brdfs.set(color);
     this.reflective.set(reflective);
+    this.emission.set(emission);
 }
 
-ClippedQuadric.prototype.setUnitCylinder = function (color, reflective) {
+ClippedQuadric.prototype.setUnitCylinder = function (color, reflective, emission) {
     this.A.set(1, 0, 0, 0,
         0, 0, 0, 0,
         0, 0, 1, 0,
@@ -42,6 +45,7 @@ ClippedQuadric.prototype.setUnitCylinder = function (color, reflective) {
         0, 0, 0, -10);
     this.brdfs.set(color);
     this.reflective.set(reflective);
+    this.emission.set(emission);
 }
 
 ClippedQuadric.prototype.transform = function (T) {
