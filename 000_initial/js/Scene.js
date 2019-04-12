@@ -88,7 +88,8 @@ Scene.prototype.update = function (gl, keysPressed) {
   yellowLamp.translate(new Vec3(5, 2, 3));
   yellowLamp.scale(0.5);
 
-  this.traceProgram.lightDirs.at(0).set(new Vec3(1, 1, 0));
+  this.traceProgram.lights.at(0).set(new Vec4(1, 1, 0, 0));
+  this.traceProgram.lights.at(1).set(new Vec4(0, 4, 0, 1));
   this.traceProgram.background.set(this.background);
   this.quadGeometry.draw();
 
