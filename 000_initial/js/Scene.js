@@ -1,4 +1,38 @@
 "use strict";
+
+/**
+ * Abstract: Legyen a színtérben legalább egy pontfényforrás. A láthatóságát ellenőrizze árnyéksugarakkal.
+ * * Lehetséges pont és irány fényforrásokat is megadni
+ * * pl.: this.traceProgram.lights.at(0).set(new Vec4(1, 1, 0, 0));
+ *
+ * Tükör: Legyen a színtérben olyan felület, ami ideális tükörként veri vissza a fényt.
+ * * Be lehet állítani a felületek tükröződését, egyik gömb teljesen tükröződik:
+ * * green.setUnitSphere(new Vec3(1, 1, 1), new Vec3(1, 1, 1), new Vec3(0, 0, 0));
+ *
+ * Törő: Legyen a színtérben olyan felület, ami ideális törő anyagként viselkedik.
+ * * Be lehet állítani a felületek transparenciáját, egyik gömb teljesen transparens:
+ * * transparentSphere.setTransparent(new Vec4(1, 1, 1, 0.9));
+ *
+ * Üveg: Legyen olyan felület, ami egyszerre ideális tükörként és ideális törőként is viselkedik.
+ * Használjon saját stack-et a rekurzió megvalósítására, vagy válasszon véletlenszerűen a törés és a tükrözés között, és átlagolja a képeket.
+ * A reflektancia és transzmittancia lehet fix.
+ * * Be lehet állítani a felületek transparenciáját és tükröződését egyszerre, egyik gömbön mindkettő be van állítva:
+ * * glassSphere.setUnitSphere(new Vec3(0, 0, 1), new Vec3(0.8, 0.9, 1), new Vec4(0, 0, 0, 0));
+ * * glassSphere.setTransparent(new Vec4(0.8, 0.9, 1, 0.9));
+ *
+ * Monte-Carlo: Legyenek a színtérben diffúz felületek. A kimenő radianciát becsülje véletlen bejövő irány alapján. A képeket átlagolja.
+ * * az emission 4-dik paraméterére lehet beállítani. Ha 0-nál nagyobb, akkor diffúz módszerrel számolja a felületet (csak azzal)
+ * * monteCarlo.setUnitSphere(new Vec3(0, 0, 0), new Vec3(0, 0, 0), new Vec4(0, 0, 0, 1));
+ *
+ * Területi: legyenek a színtérben egy emisszív felület (pl. egy hengerpalást, amit könnyű mintavételezni 1D egyenletes elosztású véletlenszámok birtokában,
+ * vagy egy gömb, amit a gömbben vagy gömbfelületen egyenletes eloszlású véletlenszámokkal lehet jól mintavételezni).
+ * A felületi pontok árnyalásakor a fényforrást  véletlenszerűen mintavételezze és a minta láthatóságát árnyéksugárral
+ * ellenőrizze (next event estimation). A képeket átlagolja.
+ * * Hozzá lehet adni világító gömböket (a scene-ben nem jelenik meg, csak a hatása érződik (árnyékok és fény))
+ * * Az első 3 koordináta a pozíció, a 4dik pedig a sugara
+ * * this.traceProgram.lightSpheres.at(0).set(new Vec4(0, 1, 0, 0.1));
+ */
+
 const Scene = function (gl) {
   this.vsQuad = new Shader(gl, gl.VERTEX_SHADER, "quad_vs.essl");
   this.fsShow = new Shader(gl, gl.FRAGMENT_SHADER, "show_fs.essl");
@@ -79,17 +113,17 @@ Scene.prototype.update = function (gl, keysPressed) {
   sik.setTransparent(new Vec4(0, 0, 0, 0));
 
 
-  const upC = new ClippedQuadric(
+  const glassSphere = new ClippedQuadric(
     this.traceProgram.quadrics.at(3),
     this.traceProgram.clippers.at(3),
     this.traceProgram.brdfs.at(3),
     this.traceProgram.reflective.at(3),
     this.traceProgram.emission.at(3),
     this.traceProgram.transparent.at(3));
-  upC.setUnitSphere(new Vec3(0, 0, 1), new Vec3(0.8, 0.9, 1), new Vec4(0, 0, 0, 0));
-  upC.scale(2);
-  upC.translate(new Vec3(0, 7, 3));
-  upC.setTransparent(new Vec4(0.8, 0.9, 1, 0.9));
+  glassSphere.setUnitSphere(new Vec3(0, 0, 1), new Vec3(0.8, 0.9, 1), new Vec4(0, 0, 0, 0));
+  glassSphere.scale(2);
+  glassSphere.translate(new Vec3(0, 7, 3));
+  glassSphere.setTransparent(new Vec4(0.8, 0.9, 1, 0.9));
 
   const yellowSphere = new ClippedQuadric(
     this.traceProgram.quadrics.at(4),
@@ -115,8 +149,21 @@ Scene.prototype.update = function (gl, keysPressed) {
   monteCarlo.translate(new Vec3(0, 1, -2));
   monteCarlo.setTransparent(new Vec4(0, 0, 0, 0));
 
+  const transparentSphere = new ClippedQuadric(
+    this.traceProgram.quadrics.at(6),
+    this.traceProgram.clippers.at(6),
+    this.traceProgram.brdfs.at(6),
+    this.traceProgram.reflective.at(6),
+    this.traceProgram.emission.at(6),
+    this.traceProgram.transparent.at(6));
+  transparentSphere.setUnitSphere(new Vec3(1, 1, 0), new Vec3(0, 0, 0), new Vec4(0, 0, 0, 0));
+  transparentSphere.scale(1.5);
+  transparentSphere.translate(new Vec3(0, 2, 2));
+  transparentSphere.setTransparent(new Vec4(1, 1, 1, 0.9));
+
   this.traceProgram.lights.at(0).set(new Vec4(1, 1, 0, 0));
   this.traceProgram.lights.at(1).set(new Vec4(0, 4, 0, 1));
+  this.traceProgram.lightSpheres.at(0).set(new Vec4(0, 1, 0, 0.1));
   this.traceProgram.background.set(this.background);
   this.quadGeometry.draw();
 
@@ -182,24 +229,6 @@ Scene.prototype.resize = function (gl, width, height) {
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   this.frameNumber = 1;
 };
-
-/**
- * Abstract: Legyen a színtérben legalább egy pontfényforrás. A láthatóságát ellenőrizze árnyéksugarakkal.
- * Lehetséges pont és irány fényforrásokat is megadni
- * pl.: this.traceProgram.lights.at(0).set(new Vec4(1, 1, 0, 0));
- *
- * Tükör: Legyen a színtérben olyan felület, ami ideális tükörként veri vissza a fényt.
- * Be lehet állítani a felületek tükröződését, egyik gömb teljesen tükröződik:
- * green.setUnitSphere(new Vec3(1, 1, 1), new Vec3(1, 1, 1), new Vec3(0, 0, 0));
- *
- * Törő: Legyen a színtérben olyan felület, ami ideális törő anyagként viselkedik.
- *
- * Üveg: Legyen olyan felület, ami egyszerre ideális tükörként és ideális törőként is viselkedik.
- * Használjon saját stack-et a rekurzió megvalósítására, vagy válasszon véletlenszerűen a törés és a tükrözés között, és átlagolja a képeket.
- * A reflektancia és transzmittancia lehet fix.
- *
- * Monte-Carlo: Legyenek a színtérben diffúz felületek. A kimenő radianciát becsülje véletlen bejövő irány alapján. A képeket átlagolja.
- */
 
 
 

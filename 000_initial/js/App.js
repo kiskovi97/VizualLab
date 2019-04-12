@@ -54,7 +54,6 @@ App.prototype.registerEventHandlers = function () {
   this.canvas.onmouseout = (event) => {
     //jshint unused:false
     this.scene.camera.mouseUp(event);
-    this.scene.resize(this.gl, this.canvas.clientWidth, this.canvas.clientHeight);
   };
   this.canvas.onmouseup = (event) => {
     //jshint unused:false
