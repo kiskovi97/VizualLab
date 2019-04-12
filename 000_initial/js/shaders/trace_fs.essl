@@ -11,6 +11,7 @@ uniform vec4 brdfs[16];
 uniform vec4 lights[16];
 uniform vec3 reflective[16];
 uniform vec3 emission[16];
+uniform vec4 transparent[16];
 uniform samplerCube background; 
 uniform sampler2D prevImage;
 uniform float frameNumber;
@@ -104,7 +105,6 @@ vec3 coliroze(vec4 hit,vec3 normal,vec4 brdfs,vec4 light){
 }
 
 vec3 colirozeAll(vec4 hit,vec3 normal,vec4 brdfs){
-  //texture(background, reflect(rayDir.xyz,normal));
   vec3 outColor = vec3(0,0,0);
   for(int i=0;i<16;i++){
     vec3 color=coliroze(hit,normal,brdfs,lights[i]);
@@ -122,9 +122,13 @@ float goldRand(in vec3 seed){
     return fract(sin(dot(seed.xy*(seed.z+PHIG), vec2(PHIG, PIG)))*SQ2G);
 }
 
-vec3 newDirection(vec3 prev, int i, vec3 normal, bool random) {
+vec3 newDirection(vec3 prev, int i, vec3 normal, bool random, bool trans, float u) {
   if (!random) {
-      return normalize( reflect(prev,normal));
+      if (trans) {
+        return normalize( refract(prev, normal, u));
+      } else {
+        return normalize( reflect(prev,normal));
+      }
   } else {
       vec3 ir = randoms[i].xyz;
       float perPixelNoise = goldRand(vec3(tex * 1024.0, 1.0)) * 6.28318530718;
@@ -134,12 +138,32 @@ vec3 newDirection(vec3 prev, int i, vec3 normal, bool random) {
   }
 }
 
+void nextDirection(inout vec4 eye, inout vec4 dir, bool trans, int i, vec3 normal, vec3 hit, float u) {
+      eye.xyz = hit + normal*0.001 * (trans ? -1. : 1.);
+      dir.xyz = newDirection(dir.xyz, i, normal, false, trans, u);
+}
+
+void colorMixing(inout vec3 arnyalas, inout vec3 w, vec3 color, int i, bool trans) {
+      vec3 refl = !trans ? reflective[i] : transparent[i].xyz;
+      vec3 negreflt = vec3(1, 1, 1 ) - refl;
+      arnyalas += emission[i] + color * w * negreflt;
+      w *= refl;
+}
+
+bool isTrans(int i, int bestIndex) {
+  float transparent = length(transparent[bestIndex]);
+  float reflective = length(reflective[bestIndex]);
+    if (transparent > 0. && reflective > 0.)
+      return (randoms[i].x < 0.5);
+    return transparent > 0.;
+}
+
 void main(void){
   vec4 d=vec4(normalize(rayDir.xyz),0.);
   vec4 e=vec4(eyePosition,1.);
   vec3 w = vec3(1,1,1);
   vec3 arnyalas = vec3(0,0,0);
-  for (int i=0; i < 2; i++) {
+  for (int i=0; i < 4; i++) {
     if (w.x + w.y + w.z < 0.001) break;
     float minT=-1.;
     int bestQuadricIndex=0;
@@ -150,12 +174,9 @@ void main(void){
       if(dot(normal,d.xyz)>0.)normal=-normal;
       vec4 bestBrdfs=brdfs[bestQuadricIndex];
       vec3 color = colirozeAll(hit,normal,bestBrdfs);
-      e.xyz = hit.xyz + normal*0.001;
-      vec3 refl = reflective[bestQuadricIndex];
-      vec3 negreflt = vec3(1, 1, 1 ) - refl;
-      arnyalas += emission[bestQuadricIndex] + color * w * negreflt;
-      w *= refl;
-      d.xyz = newDirection(d.xyz, i, normal, false);
+      bool trans = isTrans(i, bestQuadricIndex);
+      colorMixing(arnyalas, w, color, bestQuadricIndex, trans);
+      nextDirection(e,d,trans,i,normal,hit.xyz, transparent[bestQuadricIndex].w);
     } else {
       arnyalas += texture(background, d.xyz).xyz * w;
       break;

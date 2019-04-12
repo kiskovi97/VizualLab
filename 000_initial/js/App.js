@@ -40,6 +40,7 @@ App.prototype.registerEventHandlers = function () {
   document.onkeyup = (event) => {
     //jshint unused:false
     this.keysPressed[keyboardMap[event.keyCode]] = false;
+    this.scene.resize(this.gl, this.canvas.clientWidth, this.canvas.clientHeight);
   };
   this.canvas.onmousedown = (event) => {
     //jshint unused:false
@@ -53,10 +54,12 @@ App.prototype.registerEventHandlers = function () {
   this.canvas.onmouseout = (event) => {
     //jshint unused:false
     this.scene.camera.mouseUp(event);
+    this.scene.resize(this.gl, this.canvas.clientWidth, this.canvas.clientHeight);
   };
   this.canvas.onmouseup = (event) => {
     //jshint unused:false
     this.scene.camera.mouseUp(event);
+    this.scene.resize(this.gl, this.canvas.clientWidth, this.canvas.clientHeight);
   };
   window.addEventListener('resize', () => this.resize());
   window.requestAnimationFrame(() => this.update());

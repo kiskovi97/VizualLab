@@ -1,9 +1,14 @@
-const ClippedQuadric = function (A, B, brdfs, reflective, emission) {
+const ClippedQuadric = function (A, B, brdfs, reflective, emission, transparent) {
     this.A = A;
     this.B = B;
     this.brdfs = brdfs;
     this.reflective = reflective;
     this.emission = emission;
+    this.transparent = transparent;
+}
+
+ClippedQuadric.prototype.setTransparent = function (transparent) {
+    this.transparent.set(transparent);
 }
 
 ClippedQuadric.prototype.setUnitSphere = function (color, reflective, emission) {
