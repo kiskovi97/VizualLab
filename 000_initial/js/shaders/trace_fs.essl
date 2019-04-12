@@ -10,7 +10,7 @@ uniform mat4 clippers[16];
 uniform vec4 brdfs[16];
 uniform vec4 lights[16];
 uniform vec3 reflective[16];
-uniform vec3 emission[16];
+uniform vec4 emission[16];
 uniform vec4 transparent[16];
 uniform samplerCube background; 
 uniform sampler2D prevImage;
@@ -138,15 +138,16 @@ vec3 newDirection(vec3 prev, int i, vec3 normal, bool random, bool trans, float 
   }
 }
 
-void nextDirection(inout vec4 eye, inout vec4 dir, bool trans, int i, vec3 normal, vec3 hit, float u) {
+void nextDirection(inout vec4 eye, inout vec4 dir, bool trans, int i, vec3 normal, vec3 hit, int bestQuadricIndex) {
       eye.xyz = hit + normal*0.001 * (trans ? -1. : 1.);
-      dir.xyz = newDirection(dir.xyz, i, normal, false, trans, u);
+      dir.xyz = newDirection(dir.xyz, i, normal, emission[bestQuadricIndex].w > 0., trans, transparent[bestQuadricIndex].w);
 }
 
 void colorMixing(inout vec3 arnyalas, inout vec3 w, vec3 color, int i, bool trans) {
       vec3 refl = !trans ? reflective[i] : transparent[i].xyz;
+      refl = emission[i].w > 0.? vec3(1,1,1) : refl;
       vec3 negreflt = vec3(1, 1, 1 ) - refl;
-      arnyalas += emission[i] + color * w * negreflt;
+      arnyalas += emission[i].xyz + color * w * negreflt;
       w *= refl;
 }
 
@@ -176,7 +177,7 @@ void main(void){
       vec3 color = colirozeAll(hit,normal,bestBrdfs);
       bool trans = isTrans(i, bestQuadricIndex);
       colorMixing(arnyalas, w, color, bestQuadricIndex, trans);
-      nextDirection(e,d,trans,i,normal,hit.xyz, transparent[bestQuadricIndex].w);
+      nextDirection(e,d,trans,i,normal,hit.xyz, bestQuadricIndex);
     } else {
       arnyalas += texture(background, d.xyz).xyz * w;
       break;

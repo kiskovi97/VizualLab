@@ -52,7 +52,7 @@ Scene.prototype.update = function (gl, keysPressed) {
     this.traceProgram.reflective.at(0),
     this.traceProgram.emission.at(0),
     this.traceProgram.transparent.at(0));
-  cylinder.setUnitCylinder(new Vec3(1, 1, 1), new Vec3(0, 0, 0), new Vec3(0, 0, 0));
+  cylinder.setUnitCylinder(new Vec3(1, 1, 1), new Vec3(0, 0, 0), new Vec4(0, 0, 0, 0));
   cylinder.translate(new Vec3(0, 2, 0));
   cylinder.setTransparent(new Vec4(0, 0, 0, 0));
 
@@ -63,7 +63,7 @@ Scene.prototype.update = function (gl, keysPressed) {
     this.traceProgram.reflective.at(1),
     this.traceProgram.emission.at(1),
     this.traceProgram.transparent.at(1));
-  green.setUnitSphere(new Vec3(1, 1, 1), new Vec3(1, 1, 1), new Vec3(0, 0, 0));
+  green.setUnitSphere(new Vec3(1, 1, 1), new Vec3(1, 1, 1), new Vec4(0, 0, 0, 0));
   green.translate(new Vec3(-2, 2, -2));
   green.setTransparent(new Vec4(0, 0, 0, 0));
 
@@ -74,7 +74,7 @@ Scene.prototype.update = function (gl, keysPressed) {
     this.traceProgram.reflective.at(2),
     this.traceProgram.emission.at(2),
     this.traceProgram.transparent.at(2));
-  sik.setSik(new Vec3(0, 1, 1), new Vec3(0, 0, 0), new Vec3(0, 0, 0));
+  sik.setSik(new Vec3(0, 1, 1), new Vec3(0, 0, 0), new Vec4(0, 0, 0, 0));
   sik.scale(0.5, 0.5, 0.5);
   sik.setTransparent(new Vec4(0, 0, 0, 0));
 
@@ -86,22 +86,34 @@ Scene.prototype.update = function (gl, keysPressed) {
     this.traceProgram.reflective.at(3),
     this.traceProgram.emission.at(3),
     this.traceProgram.transparent.at(3));
-  upC.setUnitSphere(new Vec3(0, 0, 1), new Vec3(0.8, 0.9, 1), new Vec3(0, 0, 0));
+  upC.setUnitSphere(new Vec3(0, 0, 1), new Vec3(0.8, 0.9, 1), new Vec4(0, 0, 0, 0));
   upC.scale(2);
   upC.translate(new Vec3(0, 7, 3));
   upC.setTransparent(new Vec4(0.8, 0.9, 1, 0.9));
 
-  const yellowLamp = new ClippedQuadric(
+  const yellowSphere = new ClippedQuadric(
     this.traceProgram.quadrics.at(4),
     this.traceProgram.clippers.at(4),
     this.traceProgram.brdfs.at(4),
     this.traceProgram.reflective.at(4),
     this.traceProgram.emission.at(4),
     this.traceProgram.transparent.at(4));
-  yellowLamp.setUnitSphere(new Vec3(1, 1, 0), new Vec3(0, 0, 0), new Vec3(0, 0, 0));
-  yellowLamp.translate(new Vec3(5, 2, 3));
-  yellowLamp.scale(0.5);
-  yellowLamp.setTransparent(new Vec4(0, 0, 0, 0));
+  yellowSphere.setUnitSphere(new Vec3(1, 1, 0), new Vec3(0, 0, 0), new Vec4(0, 0, 0, 0));
+  yellowSphere.scale(1);
+  yellowSphere.translate(new Vec3(2, 1, -1));
+  yellowSphere.setTransparent(new Vec4(0, 0, 0, 0));
+
+  const monteCarlo = new ClippedQuadric(
+    this.traceProgram.quadrics.at(5),
+    this.traceProgram.clippers.at(5),
+    this.traceProgram.brdfs.at(5),
+    this.traceProgram.reflective.at(5),
+    this.traceProgram.emission.at(5),
+    this.traceProgram.transparent.at(5));
+  monteCarlo.setUnitSphere(new Vec3(0, 0, 0), new Vec3(0, 0, 0), new Vec4(0, 0, 0, 1));
+  monteCarlo.scale(1.5);
+  monteCarlo.translate(new Vec3(0, 1, -2));
+  monteCarlo.setTransparent(new Vec4(0, 0, 0, 0));
 
   this.traceProgram.lights.at(0).set(new Vec4(1, 1, 0, 0));
   this.traceProgram.lights.at(1).set(new Vec4(0, 4, 0, 1));
@@ -185,6 +197,8 @@ Scene.prototype.resize = function (gl, width, height) {
  * Üveg: Legyen olyan felület, ami egyszerre ideális tükörként és ideális törőként is viselkedik.
  * Használjon saját stack-et a rekurzió megvalósítására, vagy válasszon véletlenszerűen a törés és a tükrözés között, és átlagolja a képeket.
  * A reflektancia és transzmittancia lehet fix.
+ *
+ * Monte-Carlo: Legyenek a színtérben diffúz felületek. A kimenő radianciát becsülje véletlen bejövő irány alapján. A képeket átlagolja.
  */
 
 
