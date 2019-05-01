@@ -75,10 +75,6 @@ const UniformReflection = {
     const nUniforms = gl.getProgramParameter(glProgram, gl.ACTIVE_UNIFORMS); 
     for(let i=0; i<nUniforms; i++){ 
       const glUniform = gl.getActiveUniform(glProgram, i); 
-      // keep track of texture units used
-      if(glUniform.type === gl.SAMPLER_2D || glUniform.type === gl.SAMPLER_CUBE){ 
-        textureUnitCount += glUniform.size || 1; 
-      }
       // separate struct name (if exists) and unqualified uniform name
       const nameParts = glUniform.name.split('[')[0].split('.');
       const uniformName = nameParts[nameParts.length - 1];
@@ -87,6 +83,13 @@ const UniformReflection = {
       const location = gl.getUniformLocation(glProgram, glUniform.name);
       // use struct source instead of source for uniforms defined in structs
       (structName?structSources[structName]:source)[uniformName].commit(gl, location, textureUnitCount);
+      //  keep track of texture units used
+      if(glUniform.type === gl.SAMPLER_2D ||
+       glUniform.type === gl.SAMPLER_3D ||
+        glUniform.type === gl.SAMPLER_CUBE ||
+        glUniform.type === gl.UNSIGNED_INT_SAMPLER_2D){ 
+        textureUnitCount += glUniform.size || 1; 
+      }
     }
   },  
   /**
@@ -143,6 +146,7 @@ const UniformReflection = {
       case gl.FLOAT_VEC3   : return this.vec3(arraySize);
       case gl.FLOAT_VEC4   : return this.vec4(arraySize);
       case gl.FLOAT_MAT4   : return this.mat4(arraySize);
+      case gl.UNSIGNED_INT_SAMPLER_2D: 
       case gl.SAMPLER_2D   : return this.sampler2D(arraySize, samplerIndex);
       case gl.SAMPLER_CUBE : return this.samplerCube(arraySize, samplerIndex);
       case gl.SAMPLER_3D   : return this.sampler3D(arraySize, samplerIndex);            
