@@ -25,7 +25,7 @@ float snoise(vec3 r) {
 }
 
 float volumeF(vec3 r) {
-  return texture(volume,r * -1.).r-0.1;
+  return texture(volume,vec3(r.x,r.y,r.z * 0.5)).r;
 }
 
 vec3 coliroze(vec4 hit,vec3 normal,vec4 brdfs,vec3 lightDir){
@@ -51,15 +51,6 @@ vec3 coliroze(vec4 hit,vec3 normal,vec4 brdfs,vec3 lightDir){
   
 }
 
-vec3 colirozeAll(vec4 hit,vec3 normal,vec4 brdfs){
-  vec3 outColor = vec3(0,0,0);
-  for(int i=0;i<3;i++){
-    vec3 color=coliroze(hit,normal,brdfs,normalize(lightDirs[i]));
-    outColor+=color*0.5;
-  }
-  return outColor;
-}
-
 void collideBox(vec3 eye, vec3 dir, out float start, out float end) {
   float t1 = (1.0 - eye.x) / dir.x;
   float t2 = (0.0 - eye.x) / dir.x;
@@ -69,12 +60,111 @@ void collideBox(vec3 eye, vec3 dir, out float start, out float end) {
   t2 = (0.0 - eye.y) / dir.y;
   float ystart = min(t1,t2);
   float yend = max(t1,t2);
-  t1 = (1.0 - eye.z) / dir.z;
+  t1 = (2.0 - eye.z) / dir.z;
   t2 = (0.0 - eye.z) / dir.z;
   float zstart = min(t1,t2);
   float zend = max(t1,t2);
-  start = max(xstart,max(ystart,zstart));
-  end = min(xend,min(yend,zend));
+  start = max(max(xstart,max(ystart,zstart)), 0.);
+  end = max(min(xend,min(yend,zend)), 0.);
+}
+
+bool intersect(vec3 eye, vec3 d) {
+  float tstart;
+  float tend;
+  collideBox(eye, d, tstart, tend);
+  float h = 0.;
+  vec3 p = eye + d * tstart;
+  vec3 step =
+    d * min((tend - tstart)/256.0, 0.05);
+  for(int i=0; i<256; i++){
+      h = volumeF(p);
+      if( h > 0.1) return true;
+      p += step;
+      if (p.x > 1. || p.x < 0.) return false;
+      if (p.y > 1. || p.y < 0.) return false;
+      if (p.z > 2. || p.z < 0.) return false;
+    }
+  return false;
+}
+
+vec3 colirozeAll(vec4 hit,vec3 normal,vec4 brdfs){
+  vec3 outColor = vec3(0,0,0);
+  for(int i=0;i<1;i++){
+    if (!intersect(hit.xyz - normal * 0.05, lightDirs[i].xyz)) {
+      vec3 color=coliroze(hit,normal,brdfs,normalize(lightDirs[i]));
+      outColor+=color*0.5;
+    }
+  }
+  return outColor;
+}
+
+vec3 phong(float tstart, float tend, vec3 p, vec3 step, vec3 d, bool matCap) {
+  float h = 0.;
+ if ((tstart < tend)) {
+   for(int i=0; i<256; i++){
+      h = volumeF(p);
+      if( h > 0.1) break;
+      p += step;
+      if (p.x > 1. || p.x < 0.) break;
+      if (p.y > 1. || p.y < 0.) break;
+      if (p.z > 2. || p.z < 0.) break;
+    }
+  }
+  if (h > 0.0) {
+    float epsilon = 0.01;
+  vec3 gradient = vec3(
+          volumeF(p + vec3(epsilon, 0.0, 0.0) ) -
+          volumeF(p + vec3(-epsilon, 0.0, 0.0) ) ,
+          volumeF(p + vec3(0.0, +epsilon, 0.0) ) -
+          volumeF(p + vec3(0.0, -epsilon, 0.0) ) , 
+          volumeF(p + vec3(0.0, 0.0, +epsilon) ) -
+          volumeF(p + vec3(0.0, 0.0, -epsilon) ) 
+          );
+    vec3 normal = normalize(gradient);
+    vec4 d2 = vec4(reflect(d, normal), 0.0);
+    vec3 color = matCap ? texture(bricktexture, normal * -1.).xyz : vec3(1.,1.,0.);
+    vec3 color2 = matCap ? color : colirozeAll(vec4(p,1.),normal,vec4(color,1.));
+    return color2;
+  } else {
+    vec3 color = texture(background, d.xyz).xyz;
+    return color;
+  }
+}
+
+vec3 transparent(float tstart, float tend, vec3 p, vec3 step, vec3 d, bool matCap) {
+  float h = 0.;
+  vec3 color = vec3(0.,0.,0.);
+  float deep = 1.0;
+  if ((tstart < tend)) {
+   for(int i=0; i<256; i++){
+      h = volumeF(p);
+      if( h > 0.0) {
+        float epsilon = 0.01;
+        vec3 gradient = vec3(
+          volumeF(p + vec3(epsilon, 0.0, 0.0) ) -
+          volumeF(p + vec3(-epsilon, 0.0, 0.0) ) ,
+          volumeF(p + vec3(0.0, +epsilon, 0.0) ) -
+          volumeF(p + vec3(0.0, -epsilon, 0.0) ) , 
+          volumeF(p + vec3(0.0, 0.0, +epsilon) ) -
+          volumeF(p + vec3(0.0, 0.0, -epsilon) ) 
+          );
+        vec3 normal = normalize(gradient);
+        vec3 color2 = vec3(1.,1.,1.) * h * h * h  * 0.1;
+        color += matCap ? color2 * deep : colirozeAll(vec4(p,1.),normal,vec4(color2,1.)) * deep;
+        float angle = 1. - abs(dot(normal,normalize(d)));
+        deep -=  angle * h * h * h * angle * angle * angle;
+        if (deep < 0.2) break;
+      }
+      p += step;
+      if (p.x > 1. || p.x < 0.) break;
+      if (p.y > 1. || p.y < 0.) break;
+      if (p.z > 2. || p.z < 0.) break;
+    }
+  }
+  if (deep > 0.2) {
+    color += texture(background, d.xyz).xyz * deep;
+  }
+  return color;
 }
 
 void main(void){
@@ -82,41 +172,11 @@ void main(void){
   float tstart;
   float tend;
   collideBox(eyePosition, d, tstart, tend);
-
   vec3 p = eyePosition + d * tstart;
   vec3 step =
     d * min((tend - tstart)/256.0, 0.05);
-  float h = 0.;
-
-  if ((tstart > 0. && tend > 0.) && (tstart < tend)) {
-   for(int i=0; i<256; i++){
-      h = volumeF(p);
-      if( h > 0.0) break;
-      p += step;
-      if (p.x > 1. || p.x < 0.) break;
-      if (p.y > 1. || p.y < 0.) break;
-      if (p.z > 1. || p.z < 0.) break;
-    }
-  }
-  
-  if (h > 0.0) {
-  vec3 gradient = vec3(
-          volumeF(p + vec3(+0.05, 0.0, 0.0) ) -
-          volumeF(p + vec3(-0.05, 0.0, 0.0) ) ,
-          volumeF(p + vec3(0.0, +0.05, 0.0) ) -
-          volumeF(p + vec3(0.0, -0.05, 0.0) ) , 
-          volumeF(p + vec3(0.0, 0.0, +0.05) ) -
-          volumeF(p + vec3(0.0, 0.0, -0.05) ) 
-          );
-    vec3 normal = normalize(gradient);
-    vec4 d2 = vec4(reflect(d, normal), 0.0);
-    vec3 color = texture(bricktexture, normal * -1.).xyz;
-    vec3 color2 = colirozeAll(vec4(p,1.),normal,vec4(color,1.));
-    fragmentColor = vec4(color2 ,1.);
-  } else {
-    vec3 color = texture(background, d.xyz).xyz;
-    fragmentColor = vec4(color,1.0);
-  }
+  vec3 color = phong(tstart, tend, p, step, d, false);
+  fragmentColor = vec4(color, 1.);
 }
 
 `;

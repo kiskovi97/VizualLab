@@ -17,13 +17,13 @@ const Scene = function (gl) {
     "media/posz.jpg",
     "media/negz.jpg",]);
   this.bricktexture = new TextureCube(gl, [
-    "media/wood.jpg",
-    "media/wood.jpg",
-    "media/wood.jpg",
-    "media/wood.jpg",
-    "media/wood.jpg",
-    "media/wood.jpg",]);
-  this.volume = new Texture3D(gl, "media/brain-at_1024.jpg", 64, 64, 256);
+    "media/envMap/right.jpg",
+    "media/envMap/left.jpg",
+    "media/envMap/up.jpg",
+    "media/envMap/down.jpg",
+    "media/envMap/center.jpg",
+    "media/envMap/back.jpg",]);
+  this.volume = new Texture3D(gl, "media/body-at_4096.jpg", 256, 256, 256);
   this.tex = [];
   this.fb = [];
   this.frameNumber = 1;
@@ -48,9 +48,7 @@ Scene.prototype.update = function (gl, keysPressed) {
   gl.clearDepth(1.0);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   this.camera.move(dt, keysPressed);
-  this.traceProgram.lightDirs.at(0).set(new Vec3(0, 1, 0));
-  this.traceProgram.lightDirs.at(1).set(new Vec3(1, 0, 0));
-  this.traceProgram.lightDirs.at(2).set(new Vec3(-1, 1, 0));
+  this.traceProgram.lightDirs.at(0).set(new Vec3(1, 0, 0));
   this.traceProgram.eyePosition.set(this.camera.position);
   this.traceProgram.rayDirMatrix.set(this.camera.rayDirMatrix);
   this.traceProgram.background.set(this.background);
