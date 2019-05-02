@@ -1,10 +1,8 @@
 "use strict";
 const Scene = function (gl) {
   this.vsQuad = new Shader(gl, gl.VERTEX_SHADER, "quad_vs.essl");
-  //this.fsShow = new Shader(gl, gl.FRAGMENT_SHADER, "show_fs.essl");
   this.fsTrace = new Shader(gl, gl.FRAGMENT_SHADER, "trace_fs.essl");
   this.traceProgram = new TexturedProgram(gl, this.vsQuad, this.fsTrace);
-  //this.showProgram = new TexturedProgram(gl, this.vsQuad, this.fsShow);
   this.quadGeometry = new TexturedQuadGeometry(gl);
 
   this.timeAtFirstFrame = new Date().getTime();
@@ -18,7 +16,14 @@ const Scene = function (gl) {
     "media/negy.jpg",
     "media/posz.jpg",
     "media/negz.jpg",]);
-  this.volume = new Texture3D(gl, "media/brain.jpg");
+  this.bricktexture = new TextureCube(gl, [
+    "media/wood.jpg",
+    "media/wood.jpg",
+    "media/wood.jpg",
+    "media/wood.jpg",
+    "media/wood.jpg",
+    "media/wood.jpg",]);
+  this.volume = new Texture3D(gl, "media/brain.jpg", 256, 256, 256);
   this.tex = [];
   this.fb = [];
   this.frameNumber = 1;
@@ -43,34 +48,18 @@ Scene.prototype.update = function (gl, keysPressed) {
   gl.clearDepth(1.0);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   this.camera.move(dt, keysPressed);
+  this.traceProgram.lightDirs.at(0).set(new Vec3(0, 1, 0));
+  this.traceProgram.lightDirs.at(1).set(new Vec3(1, 0, 0));
+  this.traceProgram.lightDirs.at(2).set(new Vec3(-1, 1, 0));
   this.traceProgram.eyePosition.set(this.camera.position);
   this.traceProgram.rayDirMatrix.set(this.camera.rayDirMatrix);
   this.traceProgram.background.set(this.background);
+  this.traceProgram.bricktexture.set(this.bricktexture);
   this.traceProgram.volume.set(this.volume);
   //this.quadGeometry.draw();
   this.traceProgram.commit();
-
+  this.quadGeometry.draw();
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-};
-
-Scene.prototype.resize = function (gl, width, height) {
-  this.fb = [gl.createFramebuffer(), gl.createFramebuffer()];
-  this.tex = [gl.createTexture(), gl.createTexture()];
-  for (let i = 0; i < 2; i++) {
-    gl.bindTexture(gl.TEXTURE_2D, this.tex[i]);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, width,
-      height, 0, gl.RGB, gl.UNSIGNED_BYTE, null);
-
-    gl.bindFramebuffer(gl.FRAMEBUFFER, this.fb[i]);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D,
-      this.tex[i], 0);
-  }
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-  this.frameNumber = 1;
 };
 
 
