@@ -23,7 +23,7 @@ const Scene = function (gl) {
     "media/wood.jpg",
     "media/wood.jpg",
     "media/wood.jpg",]);
-  this.volume = new Texture3D(gl, "media/brain.jpg", 256, 256, 256);
+  this.volume = new Texture3D(gl, "media/brain-at_1024.jpg", 64, 64, 256);
   this.tex = [];
   this.fb = [];
   this.frameNumber = 1;

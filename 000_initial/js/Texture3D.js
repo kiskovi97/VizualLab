@@ -20,13 +20,13 @@ Texture3D.prototype.loaded = function (gl) {
     context.drawImage(this.image, 0, 0);
     const imageData = context.getImageData(0, 0,
         this.image.width, this.image.height);
-    const data3d = new Uint8Array(256 * 256 * 256);
-    for (let i = 0; i < 256; i++) {
-        for (let j = 0; j < 256; j++) {
-            for (let k = 0; k < 256; k++) {
-                data3d[i + 256 * (j + 256 * k)] =
-                    imageData.data[(i + 4096 * j + 256 * (k % 16) +
-                        4096 * 256 * Math.floor(k / 16)) * 4];
+    const data3d = new Uint8Array(this.depth * this.height * this.width);
+    for (let i = 0; i < this.width; i++) {
+        for (let j = 0; j < this.height; j++) {
+            for (let k = 0; k < this.depth; k++) {
+                data3d[i + this.width * (j + this.height * k)] =
+                    imageData.data[(i + 16 * this.width * j + this.width * (k % 16) +
+                        16 * this.width * this.height * Math.floor(k / 16)) * 4];
             }
         }
     }
