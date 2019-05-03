@@ -2,7 +2,9 @@
 const Scene = function (gl) {
   this.vsQuad = new Shader(gl, gl.VERTEX_SHADER, "quad_vs.essl");
   this.fsTrace = new Shader(gl, gl.FRAGMENT_SHADER, "trace_fs.essl");
+  this.fsTrance = new Shader(gl, gl.FRAGMENT_SHADER, "transparent_fs.essl");
   this.traceProgram = new TexturedProgram(gl, this.vsQuad, this.fsTrace);
+  this.newProgram = new TexturedProgram(gl, this.vsQuad, this.fsTrance);
   this.quadGeometry = new TexturedQuadGeometry(gl);
 
   this.timeAtFirstFrame = new Date().getTime();
@@ -48,17 +50,45 @@ Scene.prototype.update = function (gl, keysPressed) {
   gl.clearDepth(1.0);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   this.camera.move(dt, keysPressed);
-  this.traceProgram.lightDirs.at(0).set(new Vec3(1, 0, 0));
-  this.traceProgram.eyePosition.set(this.camera.position);
-  this.traceProgram.rayDirMatrix.set(this.camera.rayDirMatrix);
-  this.traceProgram.background.set(this.background);
-  this.traceProgram.bricktexture.set(this.bricktexture);
-  this.traceProgram.volume.set(this.volume);
-  //this.quadGeometry.draw();
-  this.traceProgram.commit();
+
+  if (keysPressed.R) {
+    this.newProgram.eyePosition.set(this.camera.position);
+    this.newProgram.rayDirMatrix.set(this.camera.rayDirMatrix);
+    this.newProgram.background.set(this.background);
+    this.newProgram.volume.set(this.volume);
+    this.newProgram.matCap.set(new Vec3(keysPressed.T ? 0 : 1, 2.0, 0));
+    this.newProgram.commit();
+  } else {
+    this.traceProgram.lightDirs.at(0).set(new Vec3(1, 1, 0));
+    this.traceProgram.eyePosition.set(this.camera.position);
+    this.traceProgram.rayDirMatrix.set(this.camera.rayDirMatrix);
+    this.traceProgram.background.set(this.background);
+    this.traceProgram.bricktexture.set(this.bricktexture);
+    this.traceProgram.volume.set(this.volume);
+    this.traceProgram.matCap.set(new Vec3(keysPressed.T ? 0 : 1, 2.0, 0));
+    this.traceProgram.commit();
+  }
+
   this.quadGeometry.draw();
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 };
 
+/**
+ * Befoglaló: Yx1x1 téglatesten belül szűr
+ * Y értéket a matCap változó Y paraméterének beállításával lehet ()
+ *
+ * Szintfelulet: phong arnyalast hasznaltam default beallitasban
+ *
+ * Hagymahej: R gomb megnyomasaval bekapcsolhato Transparent mod
+ *
+ * Onarnyek: A phong arnyalasban benne van
+ *
+ * MatCap: T gomb megnyomasaval lehet bekapcsolni (Ha nincs lenyomva az R gomb)
+ *
+ *
+ * R : Transparent
+ * T : MatCap
+ * default : Phong with shadow
+ */
 
 

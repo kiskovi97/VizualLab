@@ -1,0 +1,84 @@
+Shader.source[document.currentScript.src.split('js/shaders/')[1]]=`#version 300 es
+precision highp float;
+precision highp sampler3D;
+
+in vec2 tex;
+in vec4 rayDir;
+out vec4 fragmentColor;
+uniform vec3 eyePosition;
+uniform samplerCube background;
+uniform vec3 lightDirs[16];
+uniform vec3 lightPoints[16]; 
+uniform sampler3D volume;
+uniform vec3 matCap;
+
+float volumeF(vec3 r) {
+  return texture(volume,vec3(r.x,r.y,r.z * (1. / matCap.y) ) ).r;
+}
+
+void collideBox(vec3 eye, vec3 dir, out float start, out float end) {
+  float t1 = (1.0 - eye.x) / dir.x;
+  float t2 = (0.0 - eye.x) / dir.x;
+  float xstart = min(t1,t2);
+  float xend = max(t1,t2);
+  t1 = (1.0 - eye.y) / dir.y;
+  t2 = (0.0 - eye.y) / dir.y;
+  float ystart = min(t1,t2);
+  float yend = max(t1,t2);
+  t1 = (2.0 - eye.z) / dir.z;
+  t2 = (0.0 - eye.z) / dir.z;
+  float zstart = min(t1,t2);
+  float zend = max(t1,t2);
+  start = max(max(xstart,max(ystart,zstart)), 0.);
+  end = max(min(xend,min(yend,zend)), 0.);
+}
+
+vec3 transparent(float tstart, float tend, vec3 p, vec3 step, vec3 d, bool matCap) {
+  float h = 0.;
+  vec3 color = vec3(0.,0.,0.);
+  float deep = 1.0;
+  if ((tstart < tend)) {
+   for(int i=0; i<128; i++){
+      h = volumeF(p);
+      if( h > 0.0) {
+        float epsilon = 0.01;
+        vec3 gradient = vec3(
+          volumeF(p + vec3(epsilon, 0.0, 0.0) ) -
+          volumeF(p + vec3(-epsilon, 0.0, 0.0) ) ,
+          volumeF(p + vec3(0.0, +epsilon, 0.0) ) -
+          volumeF(p + vec3(0.0, -epsilon, 0.0) ) , 
+          volumeF(p + vec3(0.0, 0.0, +epsilon) ) -
+          volumeF(p + vec3(0.0, 0.0, -epsilon) ) 
+          );
+        vec3 normal = normalize(gradient);
+        vec3 color2 = vec3(1.,1.,1.) * h * h * h  * 0.1;
+        color += color2 * deep;
+        float angle = 1. - (dot(normal,normalize(d)) + 1.) / 2.;
+        deep -=  angle * angle * angle * angle  * h * h * h;
+        if (deep < 0.2) break;
+      }
+      p += step;
+      if (p.x > 1. || p.x < 0.) break;
+      if (p.y > 1. || p.y < 0.) break;
+      if (p.z > 2. || p.z < 0.) break;
+    }
+  }
+  if (deep > 0.2) {
+    color += texture(background, d.xyz).xyz * deep;
+  }
+  return color;
+}
+
+void main(void){
+  vec3 d = normalize(rayDir.xyz);
+  float tstart;
+  float tend;
+  collideBox(eyePosition, d, tstart, tend);
+  vec3 p = eyePosition + d * tstart;
+  vec3 step =
+    d * min((tend - tstart)/128.0, 0.05);
+    vec3 color = transparent(tstart, tend, p, step, d, true);
+    fragmentColor = vec4(color, 1.);
+}
+
+`;
