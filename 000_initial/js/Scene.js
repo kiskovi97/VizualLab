@@ -79,14 +79,16 @@ Scene.prototype.update = function (gl, keysPressed) {
  *
  * Szintfelulet: phong arnyalast hasznaltam default beallitasban
  *
- * Hagymahej: R gomb megnyomasaval bekapcsolhato Transparent mod
- *
  * Onarnyek: A phong arnyalasban benne van
  *
  * MatCap: T gomb megnyomasaval lehet bekapcsolni (Ha nincs lenyomva az R gomb)
  *
+ * Térfogati árnyalás: R gomb lenyomásával térfogati árnyalás-t lehet bekapcsolni (Ha nincs lenyomva az T gomb)
  *
- * R : Transparent
+ * Hagymahej: R + T gomb megnyomasaval bekapcsolhato Transparent mod
+ *
+ * R : Térfogati árnyalás
+ * R + T: Hagymahej
  * T : MatCap
  * default : Phong with shadow
  */
