@@ -79,13 +79,13 @@ Scene.prototype.update = function (gl, keysPressed) {
  *
  * Szintfelulet: phong arnyalast hasznaltam default beallitasban
  *
- * Onarnyek: A phong arnyalasban benne van
+ * Onarnyek: A phong arnyalasban benne van, egyiranyu feny arnyekkepzesevel ellenorizheto
  *
- * MatCap: T gomb megnyomasaval lehet bekapcsolni (Ha nincs lenyomva az R gomb)
+ * MatCap: T gomb megnyomasaval lehet bekapcsolni (Ha nincs lenyomva az R gomb) (A textura kulonbozik a hatter texturajatol)
  *
  * Térfogati árnyalás: R gomb lenyomásával térfogati árnyalás-t lehet bekapcsolni (Ha nincs lenyomva az T gomb)
  *
- * Hagymahej: R + T gomb megnyomasaval bekapcsolhato Transparent mod
+ * Hagymahej: R + T gomb megnyomasaval bekapcsolhato be, az atlatszosag a nezopont es a normalvektor fuggvenyeben valtozik
  *
  * R : Térfogati árnyalás
  * R + T: Hagymahej
